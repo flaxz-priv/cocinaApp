@@ -14,9 +14,8 @@ public class Receta {
 
     private String nombre; 
 
-    // Una receta tiene MUCHOS ingredientes
-    @OneToMany(cascade = CascadeType.ALL) 
-    private List<Ingrediente> ingredientes; 
+    @OneToMany(mappedBy = "receta", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ItemReceta> items;
 
     // Para guardar una lista de textos simples (pasos)
     @ElementCollection

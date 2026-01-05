@@ -13,7 +13,6 @@ public class Heladera {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // La heladera tiene UNA LISTA de ingredientes guardados
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Ingrediente> ingredientes = new ArrayList<>();
+    @OneToMany(mappedBy = "heladera", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ItemHeladera> items = new ArrayList<>();
 }
