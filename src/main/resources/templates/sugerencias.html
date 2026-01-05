@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sugerencias</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body>
+
+    <div class="container">
+        <header style="text-align: left; display: flex; align-items: center; gap: 15px;">
+            <a href="/" style="background: #eee; padding: 8px; border-radius: 50%; display:flex;">
+                <i class="ph ph-arrow-left" style="color: #333;"></i>
+            </a>
+            <div>
+                <h1 style="font-size: 1.2rem;">Basado en tu Heladera</h1>
+            </div>
+        </header>
+
+        <h4 style="color: var(--primary); margin-bottom: 10px;">✨ Listas para cocinar</h4>
+        
+        <div class="recipe-card complete">
+            <div class="recipe-header">
+                <span class="recipe-title">Tortilla de Papas</span>
+                <span class="match-badge match-100">Tienes todo</span>
+            </div>
+            <div class="ingredients-list">
+                <span class="ing-tag ing-have"><i class="ph-fill ph-check-circle"></i> Huevos</span>
+                <span class="ing-tag ing-have"><i class="ph-fill ph-check-circle"></i> Papas</span>
+                <span class="ing-tag ing-have"><i class="ph-fill ph-check-circle"></i> Cebolla</span>
+            </div>
+            <button style="margin-top: 15px; width: 100%; padding: 10px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer;">
+                Ver Receta
+            </button>
+        </div>
+
+        <h4 style="color: var(--accent-orange); margin-top: 30px; margin-bottom: 10px;">🛒 Te falta poco</h4>
+
+        <div class="recipe-card incomplete">
+            <div class="recipe-header">
+                <span class="recipe-title">Pastel de Carne</span>
+                <span class="match-badge match-part">Faltan 2</span>
+            </div>
+            <div class="ingredients-list">
+                <span class="ing-tag ing-have">Carne Picada</span>
+                <span class="ing-tag ing-have">Puré de tomate</span>
+                <span class="ing-tag ing-missing">Falta: Papas</span>
+                <span class="ing-tag ing-missing">Falta: Queso</span>
+            </div>
+        </div>
+        
+    </div>
+
+</body>
+</html>
