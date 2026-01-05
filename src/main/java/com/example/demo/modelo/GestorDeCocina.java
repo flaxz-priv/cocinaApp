@@ -35,7 +35,7 @@ public class GestorDeCocina {
                 
                 item.setIngrediente(ingredienteReal);
 
-                // C. IMPORTANTE: Vincular el item con la receta padre (relación bidireccional)
+                // C. Guardo el vínculo con la nueva receta
                 item.setReceta(nuevaReceta);
                 
                 return item;

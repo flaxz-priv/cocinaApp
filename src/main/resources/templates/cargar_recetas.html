@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Nueva Receta</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        /* Estilos específicos para este formulario */
+        .form-section { margin-bottom: 25px; }
+        .form-label { display: block; font-weight: 600; margin-bottom: 8px; color: var(--primary-dark); }
+        
+        .ing-row { 
+            display: flex; gap: 10px; margin-bottom: 10px; align-items: center; 
+            background: #fff; padding: 10px; border-radius: 12px; border: 1px solid #eee;
+        }
+        
+        .input-std {
+            padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-family: 'Outfit', sans-serif;
+            width: 100%; box-sizing: border-box;
+        }
+        .input-std:focus { border-color: var(--primary); outline: none; }
+
+        .btn-add {
+            background: var(--primary); color: white; border: none; padding: 8px 15px;
+            border-radius: 8px; cursor: pointer; font-size: 0.9rem;
+        }
+
+        .steps-area {
+            width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 12px;
+            font-family: 'Outfit', sans-serif; line-height: 1.6; resize: vertical;
+            min-height: 200px;
+        }
+
+        .actions { display: flex; gap: 15px; margin-top: 30px; }
+        .btn-cancel { 
+            flex: 1; padding: 15px; border: 2px solid #eee; background: white; 
+            border-radius: 12px; cursor: pointer; font-weight: 600; color: #666; text-align: center;
+        }
+        .btn-submit { 
+            flex: 2; padding: 15px; border: none; background: var(--primary); 
+            border-radius: 12px; cursor: pointer; font-weight: 600; color: white; 
+        }
+
+        /* Badge de unidad pequeña al lado del input cantidad */
+        .unit-badge {
+            background: #eee; color: #555; padding: 5px 10px; border-radius: 5px; font-size: 0.8rem; white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Nueva Receta 🥘</h1>
+        <p>Comparte tu magia culinaria</p>
+    </header>
+
+    <form id="recetaForm" onsubmit="enviarReceta(event)">
+        
+        <div class="form-section">
+            <label class="form-label">Nombre del Plato</label>
+            <input type="text" id="nombreReceta" class="input-std" placeholder="Ej: Pastel de Papas" required>
+        </div>
+
+        <div class="form-section">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <label class="form-label">Ingredientes</label>
+                <button type="button" class="btn-add" onclick="agregarFilaIngrediente()">+ Agregar</button>
+            </div>
+            
+            <div id="listaIngredientes">
+                </div>
+        </div>
+
+        <div class="form-section">
+            <label class="form-label">Pasos de preparación</label>
+            <textarea id="txtPasos" class="steps-area" placeholder="1. "></textarea>
+            <p style="font-size: 0.8rem; color: #999; text-align: right;">Presiona Enter para nuevo paso</p>
+        </div>
+
+        <div class="actions">
+            <a href="/" class="btn-cancel">Cancelar</a>
+            <button type="submit" class="btn-submit">Aceptar y Guardar</button>
+        </div>
+    </form>
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    // Recibimos la lista de ingredientes desde el controlador
+    const ingredientesDB = /*[[${ingredientesDisponibles}]]*/ [];
+    /*]]>*/
+</script>
+
+<script>
+    // --- 1. LÓGICA DE PASOS AUTOMÁTICOS ---
+    const txtPasos = document.getElementById('txtPasos');
+    
+    // Inicializar con "1. " si está vacío
+    if(!txtPasos.value) txtPasos.value = "1. ";
+
+    txtPasos.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault(); // Evita el salto de línea normal
+            
+            const currentText = this.value;
+            // Contamos cuántos saltos de línea hay para saber el número
+            const lines = currentText.split('\n');
+            const nextStep = lines.length + 1;
+
+            // Agregamos el salto y el número
+            this.value = currentText + "\n" + nextStep + ". ";
+            
+            // Scroll al final
+            this.scrollTop = this.scrollHeight;
+        }
+    });
+
+
+    // --- 2. LÓGICA DE INGREDIENTES ---
+    
+    // Función para crear el <select> con opciones
+    function crearSelectIngredientes() {
+        let options = '<option value="" disabled selected>Selecciona...</option>';
+        ingredientesDB.forEach(ing => {
+            // Guardamos la unidad en un atributo data-unidad para leerlo fácil
+            options += `<option value="${ing.id}" data-unidad="${ing.unidad}">${ing.nombre}</option>`;
+        });
+        return options;
+    }
+
+    function agregarFilaIngrediente() {
+        const div = document.createElement('div');
+        div.className = 'ing-row';
+        div.innerHTML = `
+            <div style="flex: 2;">
+                <select class="input-std select-ing" required onchange="actualizarUnidad(this)">
+                    ${crearSelectIngredientes()}
+                </select>
+            </div>
+            <div style="flex: 1; display:flex; align-items:center; gap:5px;">
+                <input type="number" step="0.1" class="input-std input-qty" placeholder="Cant." required>
+                <span class="unit-badge">-</span>
+            </div>
+            <button type="button" onclick="this.parentElement.remove()" style="background:none; border:none; color:#E07A5F; cursor:pointer;">
+                <i class="ph-fill ph-trash" style="font-size:1.2rem;"></i>
+            </button>
+        `;
+        document.getElementById('listaIngredientes').appendChild(div);
+    }
+
+    // Al cambiar el ingrediente, actualizamos la etiquetita de unidad (Kg, Lt, etc)
+    function actualizarUnidad(selectElement) {
+        const unidad = selectElement.options[selectElement.selectedIndex].getAttribute('data-unidad');
+        // Buscamos el span .unit-badge que está al lado
+        const badge = selectElement.closest('.ing-row').querySelector('.unit-badge');
+        badge.textContent = unidad || '-';
+    }
+
+    // Agregar una fila al inicio por defecto
+    agregarFilaIngrediente();
+
+
+    // --- 3. ENVIAR AL BACKEND ---
+    async function enviarReceta(e) {
+        e.preventDefault();
+
+        // Armar el objeto DTO
+        const nombre = document.getElementById('nombreReceta').value;
+        const textoPasos = document.getElementById('txtPasos').value;
+        
+        // Convertir texto de pasos a Lista de Strings (separando por nueva línea)
+        const listaPasos = textoPasos.split('\n').filter(line => line.trim() !== "");
+
+        // Recolectar ingredientes
+        const items = [];
+        document.querySelectorAll('.ing-row').forEach(row => {
+            const idIng = row.querySelector('.select-ing').value;
+            const cant = row.querySelector('.input-qty').value;
+            
+            if(idIng && cant) {
+                items.push({
+                    idIngrediente: parseInt(idIng),
+                    cantidad: parseFloat(cant)
+                });
+            }
+        });
+
+        const recetaDTO = {
+            nombre: nombre,
+            pasos: listaPasos,
+            items: items,
+            tipoReceta: "ESTANDAR" // O lo que quieras por defecto
+        };
+
+        try {
+            const response = await fetch('/api/recetas/guardar', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(recetaDTO)
+            });
+
+            if(response.ok) {
+                alert("¡Receta guardada con éxito!");
+                window.location.href = "/"; // Volver al menú
+            } else {
+                alert("Hubo un error al guardar.");
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Error de conexión");
+        }
+    }
+</script>
+
+</body>
+</html>
