@@ -13,5 +13,4 @@ public class Ingrediente {
 
     private String nombre;
     private String unidad; // Ej: "gr", "kg", "unidad"
-    private int cantidad;
 }
