@@ -2,56 +2,229 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sugerencias</title>
+    <title>Qué Cocinar</title>
     <link rel="stylesheet" href="/css/styles.css">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        /* Filtros Superiores */
+        .filter-container { display: flex; gap: 10px; margin-bottom: 25px; overflow-x: auto; padding-bottom: 5px; }
+        .filter-btn {
+            border: 1px solid #ddd; background: white; padding: 8px 16px; border-radius: 20px;
+            cursor: pointer; font-size: 0.9rem; white-space: nowrap; transition: all 0.2s;
+        }
+        .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* Estilos de Tarjetas */
+        .recipe-card {
+            background: white; padding: 20px; border-radius: 16px; margin-bottom: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-left: 5px solid #ccc;
+            cursor: pointer; transition: transform 0.2s;
+        }
+        .recipe-card:hover { transform: translateY(-3px); }
+        
+        .status-ok { border-left-color: var(--primary); }
+        .status-missing { border-left-color: #E07A5F; }
+
+        .badge-type {
+            font-size: 0.75rem; padding: 4px 8px; border-radius: 6px; background: #eee; color: #666; font-weight: 600;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6);
+            display: none; justify-content: center; align-items: center; z-index: 999;
+        }
+        .modal-content {
+            background: white; width: 90%; max-width: 500px; max-height: 85vh;
+            border-radius: 16px; padding: 25px; overflow-y: auto; position: relative;
+        }
+        .step-item { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #f0f0f0; }
+        
+        .btn-cook { width: 100%; background: var(--primary); color: white; padding: 15px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 1rem; margin-top: 15px; }
+        .btn-close { width: 100%; background: white; border: 2px solid #eee; color: #666; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+    </style>
 </head>
 <body>
 
-    <div class="container">
-        <header style="text-align: left; display: flex; align-items: center; gap: 15px;">
-            <a href="/" style="background: #eee; padding: 8px; border-radius: 50%; display:flex;">
-                <i class="ph ph-arrow-left" style="color: #333;"></i>
-            </a>
-            <div>
-                <h1 style="font-size: 1.2rem;">Basado en tu Heladera</h1>
-            </div>
-        </header>
-
-        <h4 style="color: var(--primary); margin-bottom: 10px;">✨ Listas para cocinar</h4>
-        
-        <div class="recipe-card complete">
-            <div class="recipe-header">
-                <span class="recipe-title">Tortilla de Papas</span>
-                <span class="match-badge match-100">Tienes todo</span>
-            </div>
-            <div class="ingredients-list">
-                <span class="ing-tag ing-have"><i class="ph-fill ph-check-circle"></i> Huevos</span>
-                <span class="ing-tag ing-have"><i class="ph-fill ph-check-circle"></i> Papas</span>
-                <span class="ing-tag ing-have"><i class="ph-fill ph-check-circle"></i> Cebolla</span>
-            </div>
-            <button style="margin-top: 15px; width: 100%; padding: 10px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer;">
-                Ver Receta
-            </button>
+<div class="container">
+    <header style="display:flex; align-items:center; gap:10px; margin-bottom:20px;">
+        <a href="/" style="text-decoration:none; color:var(--text-main); font-size:1.5rem;"><i class="ph-bold ph-arrow-left"></i></a>
+        <div>
+            <h1 style="margin:0; font-size:1.5rem;">Sugerencias</h1>
+            <p style="margin:0; font-size:0.9rem; color:#888;">Basado en tu heladera</p>
         </div>
+    </header>
 
-        <h4 style="color: var(--accent-orange); margin-top: 30px; margin-bottom: 10px;">🛒 Te falta poco</h4>
-
-        <div class="recipe-card incomplete">
-            <div class="recipe-header">
-                <span class="recipe-title">Pastel de Carne</span>
-                <span class="match-badge match-part">Faltan 2</span>
-            </div>
-            <div class="ingredients-list">
-                <span class="ing-tag ing-have">Carne Picada</span>
-                <span class="ing-tag ing-have">Puré de tomate</span>
-                <span class="ing-tag ing-missing">Falta: Papas</span>
-                <span class="ing-tag ing-missing">Falta: Queso</span>
-            </div>
-        </div>
-        
+    <div class="filter-container">
+        <button class="filter-btn active" onclick="filtrar('TODOS', this)">Todos</button>
+        <button class="filter-btn" onclick="filtrar('VEGANO', this)">🌿 Veganas</button>
+        <button class="filter-btn" onclick="filtrar('VEGETARIANO', this)">🥗 Vegetarianas</button>
+        <button class="filter-btn" onclick="filtrar('CARNIVORO', this)">🍖 Carnívoras</button>
     </div>
+
+    <div id="loading" style="text-align:center; padding:40px; color:#999;">Cargando recetas mágicas...</div>
+    
+    <div id="listaRecetas">
+        </div>
+</div>
+
+<div id="modalReceta" class="modal-overlay">
+    <div class="modal-content">
+        <h2 id="mTitulo" style="margin-top:0;">Nombre Receta</h2>
+        <span id="mTipo" class="badge-type">TIPO</span>
+        
+        <div style="margin-top:20px;">
+            <h4 style="margin-bottom:10px;">Ingredientes</h4>
+            <ul id="mIngredientes" style="padding-left:20px; color:#555;"></ul>
+        </div>
+        
+        <div style="margin-top:20px;">
+            <h4 style="margin-bottom:10px;">Pasos</h4>
+            <div id="mPasos" style="font-size:0.95rem; line-height:1.6;"></div>
+        </div>
+
+        <button id="btnHacerReceta" class="btn-cook">👨‍🍳 ¡Hacer Receta!</button>
+        <button onclick="document.getElementById('modalReceta').style.display='none'" class="btn-close">Cancelar</button>
+    </div>
+</div>
+
+<script>
+    let todasLasRecetas = [];
+
+    // 1. Cargar datos al iniciar
+    fetch('/api/recetas/sugerencias')
+        .then(res => res.json())
+        .then(data => {
+            todasLasRecetas = data;
+            document.getElementById('loading').style.display = 'none';
+            renderizar(todasLasRecetas);
+        })
+        .catch(err => {
+            document.getElementById('loading').innerText = "Error cargando recetas :(";
+            console.error(err);
+        });
+
+    // 2. Renderizar lista
+    function renderizar(lista) {
+        const container = document.getElementById('listaRecetas');
+        container.innerHTML = '';
+
+        if(lista.length === 0) {
+            container.innerHTML = '<p style="text-align:center; color:#999;">No hay recetas que coincidan.</p>';
+            return;
+        }
+
+        lista.forEach(r => {
+            const card = document.createElement('div');
+            // Clase CSS según si falta algo o no
+            const estadoClass = r.esPosible ? 'status-ok' : 'status-missing';
+            const textoEstado = r.esPosible ? 
+                '<span style="color:var(--primary); font-weight:bold;"><i class="ph-fill ph-check-circle"></i> Tienes todo</span>' : 
+                `<span style="color:#E07A5F; font-weight:bold;">Faltan ${r.ingredientesFaltantes.length} ing.</span>`;
+
+            // Mostramos qué falta si no es posible
+            let htmlFaltantes = '';
+            if(!r.esPosible) {
+                htmlFaltantes = `<div style="margin-top:10px; font-size:0.85rem; color:#E07A5F; background:#FFF3E0; padding:8px; border-radius:8px;">
+                                    <b>Te falta:</b> ${r.ingredientesFaltantes.join(', ')}
+                                 </div>`;
+            }
+
+            card.className = `recipe-card ${estadoClass}`;
+            card.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:start;">
+                    <h3 style="margin:0;">${r.nombre}</h3>
+                    <span class="badge-type">${formatoTipo(r.tipo)}</span>
+                </div>
+                <div style="margin-top:5px; font-size:0.9rem;">${textoEstado}</div>
+                ${htmlFaltantes}
+            `;
+            
+            // Click abre el modal
+            card.onclick = () => abrirModal(r);
+            container.appendChild(card);
+        });
+    }
+
+    // 3. Filtros
+    function filtrar(tipo, btn) {
+        // Estilo botones
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        if(tipo === 'TODOS') {
+            renderizar(todasLasRecetas);
+        } else {
+            const filtradas = todasLasRecetas.filter(r => r.tipo === tipo);
+            renderizar(filtradas);
+        }
+    }
+
+    function formatoTipo(tipo) {
+        if(tipo === 'VEGANO') return '🌿 Vegano';
+        if(tipo === 'VEGETARIANO') return '🥗 Vegetariano';
+        if(tipo === 'CARNIVORO') return '🍖 Carnívoro';
+        return tipo;
+    }
+
+    // 4. Lógica del Modal y Cocinar
+    function abrirModal(receta) {
+        const modal = document.getElementById('modalReceta');
+        document.getElementById('mTitulo').innerText = receta.nombre;
+        document.getElementById('mTipo').innerText = formatoTipo(receta.tipo);
+        
+        // Llenar ingredientes
+        const ul = document.getElementById('mIngredientes');
+        ul.innerHTML = '';
+        receta.todosLosIngredientes.forEach(ing => {
+            const li = document.createElement('li');
+            li.innerText = ing;
+            ul.appendChild(li);
+        });
+
+        // Llenar pasos
+        const divPasos = document.getElementById('mPasos');
+        divPasos.innerHTML = '';
+        receta.pasos.forEach(paso => {
+            const p = document.createElement('div');
+            p.className = 'step-item';
+            p.innerText = paso;
+            divPasos.appendChild(p);
+        });
+
+        // Configurar botón cocinar
+        const btnCocinar = document.getElementById('btnHacerReceta');
+        if(!receta.esPosible) {
+            btnCocinar.style.background = '#ccc';
+            btnCocinar.innerText = 'Faltan ingredientes';
+            btnCocinar.disabled = true;
+        } else {
+            btnCocinar.style.background = 'var(--primary)';
+            btnCocinar.innerText = '👨‍🍳 ¡Hacer Receta!';
+            btnCocinar.disabled = false;
+            btnCocinar.onclick = () => confirmarCocinar(receta.idReceta);
+        }
+
+        modal.style.display = 'flex';
+    }
+
+    async function confirmarCocinar(id) {
+        if(!confirm("¿Seguro? Se descontarán los ingredientes de tu heladera.")) return;
+
+        try {
+            const res = await fetch(`/api/recetas/cocinar/${id}`, { method: 'POST' });
+            if(res.ok) {
+                alert("¡Que lo disfrutes! Stock actualizado.");
+                window.location.href = "/"; // Volver al inicio
+            } else {
+                alert("Error al procesar.");
+            }
+        } catch(e) {
+            console.error(e);
+            alert("Error de conexión");
+        }
+    }
+</script>
 
 </body>
 </html>

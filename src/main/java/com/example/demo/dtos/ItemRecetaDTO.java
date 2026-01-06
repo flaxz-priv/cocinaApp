@@ -1,6 +1,5 @@
 package com.example.demo.dtos;
 
-import com.example.demo.modelo.Ingrediente;
 import com.example.demo.modelo.Receta;
 import lombok.Data;
 
@@ -9,7 +8,7 @@ public class ItemRecetaDTO {
     private Long id;
 
 
-    private Ingrediente ingrediente; // De aquí sacamos nombre y unidad
+    private Long idIngrediente; // De aquí sacamos nombre y unidad
 
     private Receta receta;
 

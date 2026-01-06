@@ -2,6 +2,8 @@ package com.example.demo.modelo;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 @Entity
 @Data
@@ -16,6 +18,8 @@ public class ItemReceta {
 
     @ManyToOne
     @JoinColumn(name = "receta_id")
+    @ToString.Exclude          
+    @EqualsAndHashCode.Exclude 
     private Receta receta;
 
     private double cantidad; // Ej: 0.5 (Significa 0.5 Litros de Leche)

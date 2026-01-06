@@ -6,54 +6,85 @@
     <link rel="stylesheet" href="/css/styles.css">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
-        /* Estilos específicos para este formulario */
+        /* --- ESTILOS ESPECÍFICOS PARA ESTA PÁGINA --- */
         .form-section { margin-bottom: 25px; }
         .form-label { display: block; font-weight: 600; margin-bottom: 8px; color: var(--primary-dark); }
         
+        /* Contenedor de cada fila de ingrediente */
         .ing-row { 
-            display: flex; gap: 10px; margin-bottom: 10px; align-items: center; 
-            background: #fff; padding: 10px; border-radius: 12px; border: 1px solid #eee;
+            display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-start; 
+            background: #fff; padding: 15px; border-radius: 12px; border: 1px solid #eee;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+            transition: all 0.2s;
         }
+        .ing-row:hover { border-color: var(--primary); }
         
         .input-std {
-            padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-family: 'Outfit', sans-serif;
-            width: 100%; box-sizing: border-box;
+            padding: 12px; border: 1px solid #ddd; border-radius: 8px; 
+            font-family: 'Outfit', sans-serif; width: 100%; box-sizing: border-box;
+            transition: border 0.2s;
         }
         .input-std:focus { border-color: var(--primary); outline: none; }
 
-        .btn-add {
-            background: var(--primary); color: white; border: none; padding: 8px 15px;
-            border-radius: 8px; cursor: pointer; font-size: 0.9rem;
+        /* --- COMPONENTE DE BUSCADOR CUSTOM --- */
+        .searchable-container {
+            position: relative; /* Para que la lista flote relativa a esto */
+            flex: 2;
+        }
+        
+        .results-list {
+            position: absolute; top: 100%; left: 0; right: 0;
+            background: white; border: 1px solid #ddd; border-radius: 8px;
+            max-height: 200px; overflow-y: auto; z-index: 100;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: none; /* Oculto por defecto */
+        }
+        
+        .result-item {
+            padding: 10px 15px; cursor: pointer; border-bottom: 1px solid #f9f9f9;
+            font-size: 0.95rem; display: flex; justify-content: space-between;
+        }
+        .result-item:hover { background-color: #f0f7f1; color: var(--primary-dark); }
+        .result-item span.unit { font-size: 0.8rem; color: #999; }
+
+        /* --- SELECTOR DE TIPO (CARNIVORA/VEGETARIANA...) --- */
+        .type-selector {
+            display: flex; gap: 10px; margin-top: 10px;
+        }
+        
+        /* Ocultamos el radio button real */
+        .type-selector input[type="radio"] { display: none; }
+        
+        /* Estilo del botón etiqueta */
+        .type-card {
+            flex: 1; padding: 15px; text-align: center; border: 2px solid #eee;
+            border-radius: 12px; cursor: pointer; transition: all 0.2s;
+            background: white; color: #666; font-weight: 600;
+        }
+        
+        /* Cuando el radio está seleccionado */
+        .type-selector input[type="radio"]:checked + .type-card {
+            border-color: var(--primary); background-color: #f0f7f1; color: var(--primary-dark);
+            transform: translateY(-2px); box-shadow: 0 4px 10px rgba(122, 158, 126, 0.2);
         }
 
+        /* --- OTROS --- */
         .steps-area {
             width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 12px;
-            font-family: 'Outfit', sans-serif; line-height: 1.6; resize: vertical;
-            min-height: 200px;
+            font-family: 'Outfit', sans-serif; line-height: 1.6; resize: vertical; min-height: 150px;
         }
 
         .actions { display: flex; gap: 15px; margin-top: 30px; }
-        .btn-cancel { 
-            flex: 1; padding: 15px; border: 2px solid #eee; background: white; 
-            border-radius: 12px; cursor: pointer; font-weight: 600; color: #666; text-align: center;
-        }
-        .btn-submit { 
-            flex: 2; padding: 15px; border: none; background: var(--primary); 
-            border-radius: 12px; cursor: pointer; font-weight: 600; color: white; 
-        }
-
-        /* Badge de unidad pequeña al lado del input cantidad */
-        .unit-badge {
-            background: #eee; color: #555; padding: 5px 10px; border-radius: 5px; font-size: 0.8rem; white-space: nowrap;
-        }
+        .btn-cancel { flex: 1; padding: 15px; border: 2px solid #eee; background: white; border-radius: 12px; cursor: pointer; color: #666; text-align: center; }
+        .btn-submit { flex: 2; padding: 15px; border: none; background: var(--primary); border-radius: 12px; cursor: pointer; color: white; font-weight: bold; }
+        .btn-add { background: var(--secondary, #E07A5F); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <header>
-        <h1>Nueva Receta 🥘</h1>
-        <p>Comparte tu magia culinaria</p>
+    <header style="margin-bottom: 20px;">
+        <h1>Crear Receta 🥘</h1>
     </header>
 
     <form id="recetaForm" onsubmit="enviarReceta(event)">
@@ -66,7 +97,7 @@
         <div class="form-section">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                 <label class="form-label">Ingredientes</label>
-                <button type="button" class="btn-add" onclick="agregarFilaIngrediente()">+ Agregar</button>
+                <button type="button" class="btn-add" onclick="agregarFilaIngrediente()">+ Agregar Ingrediente</button>
             </div>
             
             <div id="listaIngredientes">
@@ -76,107 +107,165 @@
         <div class="form-section">
             <label class="form-label">Pasos de preparación</label>
             <textarea id="txtPasos" class="steps-area" placeholder="1. "></textarea>
-            <p style="font-size: 0.8rem; color: #999; text-align: right;">Presiona Enter para nuevo paso</p>
+        </div>
+
+        <div class="form-section">
+            <label class="form-label">¿Qué tipo de receta es?</label>
+            <div class="type-selector">
+                <label>
+                    <input type="radio" name="tipoReceta" value="CARNIVORO" required>
+                    <div class="type-card">🍖 Carnívora</div>
+                </label>
+                <label>
+                    <input type="radio" name="tipoReceta" value="VEGETARIANO">
+                    <div class="type-card">🥗 Vegetariana</div>
+                </label>
+                <label>
+                    <input type="radio" name="tipoReceta" value="VEGANO">
+                    <div class="type-card">🌿 Vegana</div>
+                </label>
+            </div>
         </div>
 
         <div class="actions">
             <a href="/" class="btn-cancel">Cancelar</a>
-            <button type="submit" class="btn-submit">Aceptar y Guardar</button>
+            <button type="submit" class="btn-submit">Guardar Receta</button>
         </div>
     </form>
 </div>
 
 <script th:inline="javascript">
     /*<![CDATA[*/
-    // Recibimos la lista de ingredientes desde el controlador
     const ingredientesDB = /*[[${ingredientesDisponibles}]]*/ [];
     /*]]>*/
 </script>
 
 <script>
-    // --- 1. LÓGICA DE PASOS AUTOMÁTICOS ---
-    const txtPasos = document.getElementById('txtPasos');
+    // --- 1. LÓGICA DE INGREDIENTES (BUSCADOR CUSTOM) ---
     
-    // Inicializar con "1. " si está vacío
-    if(!txtPasos.value) txtPasos.value = "1. ";
-
-    txtPasos.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault(); // Evita el salto de línea normal
-            
-            const currentText = this.value;
-            // Contamos cuántos saltos de línea hay para saber el número
-            const lines = currentText.split('\n');
-            const nextStep = lines.length + 1;
-
-            // Agregamos el salto y el número
-            this.value = currentText + "\n" + nextStep + ". ";
-            
-            // Scroll al final
-            this.scrollTop = this.scrollHeight;
-        }
-    });
-
-
-    // --- 2. LÓGICA DE INGREDIENTES ---
-    
-    // Función para crear el <select> con opciones
-    function crearSelectIngredientes() {
-        let options = '<option value="" disabled selected>Selecciona...</option>';
-        ingredientesDB.forEach(ing => {
-            // Guardamos la unidad en un atributo data-unidad para leerlo fácil
-            options += `<option value="${ing.id}" data-unidad="${ing.unidad}">${ing.nombre}</option>`;
-        });
-        return options;
-    }
-
+    // Genera el HTML de una nueva fila
     function agregarFilaIngrediente() {
         const div = document.createElement('div');
         div.className = 'ing-row';
         div.innerHTML = `
-            <div style="flex: 2;">
-                <select class="input-std select-ing" required onchange="actualizarUnidad(this)">
-                    ${crearSelectIngredientes()}
-                </select>
+            <div class="searchable-container">
+                <input type="text" class="input-std search-input" 
+                       placeholder="Buscar (ej: cebolla)..." 
+                       oninput="filtrarIngredientes(this)"
+                       onfocus="filtrarIngredientes(this)" 
+                       autocomplete="off" required>
+                
+                <input type="hidden" class="ing-id-input">
+                
+                <div class="results-list"></div>
             </div>
+
             <div style="flex: 1; display:flex; align-items:center; gap:5px;">
                 <input type="number" step="0.1" class="input-std input-qty" placeholder="Cant." required>
-                <span class="unit-badge">-</span>
+                <span class="unit-badge" style="font-size:0.8rem; color:#888; font-weight:600;">-</span>
             </div>
-            <button type="button" onclick="this.parentElement.remove()" style="background:none; border:none; color:#E07A5F; cursor:pointer;">
-                <i class="ph-fill ph-trash" style="font-size:1.2rem;"></i>
+
+            <button type="button" onclick="this.closest('.ing-row').remove()" style="background:none; border:none; color:#E07A5F; cursor:pointer; padding:5px;">
+                <i class="ph-fill ph-trash" style="font-size:1.4rem;"></i>
             </button>
         `;
         document.getElementById('listaIngredientes').appendChild(div);
     }
 
-    // Al cambiar el ingrediente, actualizamos la etiquetita de unidad (Kg, Lt, etc)
-    function actualizarUnidad(selectElement) {
-        const unidad = selectElement.options[selectElement.selectedIndex].getAttribute('data-unidad');
-        // Buscamos el span .unit-badge que está al lado
-        const badge = selectElement.closest('.ing-row').querySelector('.unit-badge');
-        badge.textContent = unidad || '-';
+    // Filtra la lista cuando el usuario escribe
+    function filtrarIngredientes(inputElement) {
+        const texto = inputElement.value.toLowerCase();
+        const contenedor = inputElement.closest('.searchable-container');
+        const listaDiv = contenedor.querySelector('.results-list');
+        
+        // Limpiamos la lista anterior
+        listaDiv.innerHTML = '';
+        
+        // Filtramos: coincidencia parcial (includes)
+        const resultados = ingredientesDB.filter(ing => 
+            ing.nombre.toLowerCase().includes(texto)
+        );
+
+        if (resultados.length > 0) {
+            listaDiv.style.display = 'block';
+            resultados.forEach(ing => {
+                const item = document.createElement('div');
+                item.className = 'result-item';
+                item.innerHTML = `<span>${ing.nombre}</span> <span class="unit">${ing.unidad}</span>`;
+                
+                // Al hacer click en una opción
+                item.onclick = () => seleccionarIngrediente(ing, inputElement, contenedor);
+                
+                listaDiv.appendChild(item);
+            });
+        } else {
+            listaDiv.style.display = 'none';
+        }
     }
 
-    // Agregar una fila al inicio por defecto
+    // Maneja la selección de un item de la lista
+    function seleccionarIngrediente(ing, inputTexto, contenedor) {
+        // 1. Llenamos el input visual con el nombre
+        inputTexto.value = ing.nombre;
+        
+        // 2. Guardamos el ID en el hidden input
+        contenedor.querySelector('.ing-id-input').value = ing.id;
+        
+        // 3. Ocultamos la lista
+        contenedor.querySelector('.results-list').style.display = 'none';
+        
+        // 4. Actualizamos el badge de unidad visualmente (buscamos el .unit-badge en la fila padre)
+        const fila = contenedor.closest('.ing-row');
+        fila.querySelector('.unit-badge').textContent = ing.unidad;
+    }
+
+    // Cerrar las listas si clickeo afuera
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.searchable-container')) {
+            document.querySelectorAll('.results-list').forEach(list => list.style.display = 'none');
+        }
+    });
+
+    // Agregar una fila inicial
     agregarFilaIngrediente();
 
 
-    // --- 3. ENVIAR AL BACKEND ---
+    // --- 2. PASOS AUTOMÁTICOS (Tu lógica existente) ---
+    const txtPasos = document.getElementById('txtPasos');
+    if(!txtPasos.value) txtPasos.value = "1. ";
+    
+    txtPasos.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const lines = this.value.split('\n');
+            const nextStep = lines.length + 1;
+            this.value = this.value + "\n" + nextStep + ". ";
+            this.scrollTop = this.scrollHeight;
+        }
+    });
+
+
+    // --- 3. ENVÍO AL BACKEND ---
     async function enviarReceta(e) {
         e.preventDefault();
 
-        // Armar el objeto DTO
         const nombre = document.getElementById('nombreReceta').value;
         const textoPasos = document.getElementById('txtPasos').value;
-        
-        // Convertir texto de pasos a Lista de Strings (separando por nueva línea)
         const listaPasos = textoPasos.split('\n').filter(line => line.trim() !== "");
 
-        // Recolectar ingredientes
+        // NUEVO: Capturar el Radio Button seleccionado
+        const tipoRadio = document.querySelector('input[name="tipoReceta"]:checked');
+        if (!tipoRadio) {
+            alert("Por favor selecciona si es Vegana, Carnívora, etc.");
+            return;
+        }
+
+        // Recolectar items
         const items = [];
+        let errorIngredientes = false;
+
         document.querySelectorAll('.ing-row').forEach(row => {
-            const idIng = row.querySelector('.select-ing').value;
+            const idIng = row.querySelector('.ing-id-input').value; // ID oculto
             const cant = row.querySelector('.input-qty').value;
             
             if(idIng && cant) {
@@ -184,34 +273,42 @@
                     idIngrediente: parseInt(idIng),
                     cantidad: parseFloat(cant)
                 });
+            } else {
+                // Si llenó cantidad pero no seleccionó ingrediente de la lista
+                const textoEscrito = row.querySelector('.search-input').value;
+                if(textoEscrito && !idIng) errorIngredientes = true; 
             }
         });
+
+        if(errorIngredientes) {
+            alert("Por favor selecciona los ingredientes de la lista desplegable (no solo escribas el nombre).");
+            return;
+        }
 
         const recetaDTO = {
             nombre: nombre,
             pasos: listaPasos,
             items: items,
-            tipoReceta: "ESTANDAR" // O lo que quieras por defecto
+            tipoReceta: tipoRadio.value // Aquí enviamos el valor (CARNIVORA, VEGANA, etc)
         };
 
         try {
             const response = await fetch('/api/recetas/guardar', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(recetaDTO)
             });
 
             if(response.ok) {
-                alert("¡Receta guardada con éxito!");
-                window.location.href = "/"; // Volver al menú
+                alert("¡Receta guardada exitosamente!");
+                window.location.href = "/";
             } else {
-                alert("Hubo un error al guardar.");
+                alert("Error al guardar. Verifica la consola.");
+                console.error(await response.text());
             }
         } catch (error) {
             console.error(error);
-            alert("Error de conexión");
+            alert("Error de conexión con el servidor");
         }
     }
 </script>

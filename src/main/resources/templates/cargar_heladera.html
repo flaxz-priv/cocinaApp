@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Cargar Heladera</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        /* Reutilizamos estilos, agregamos Modal */
+        .ing-row { 
+            display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-start; 
+            background: #fff; padding: 15px; border-radius: 12px; border: 1px solid #eee;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+        .input-std {
+            padding: 12px; border: 1px solid #ddd; border-radius: 8px; 
+            font-family: 'Outfit', sans-serif; width: 100%; box-sizing: border-box;
+        }
+        
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5); z-index: 1000;
+            display: none; justify-content: center; align-items: center;
+        }
+        .modal-card {
+            background: white; padding: 25px; border-radius: 16px;
+            width: 90%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .searchable-container { position: relative; flex: 2; }
+        .results-list {
+            position: absolute; top: 100%; left: 0; right: 0; background: white;
+            border: 1px solid #ddd; border-radius: 8px; max-height: 200px; overflow-y: auto; 
+            z-index: 100; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .result-item { padding: 10px 15px; cursor: pointer; border-bottom: 1px solid #f9f9f9; display: flex; justify-content: space-between; }
+        .result-item:hover { background-color: #f0f7f1; }
+        
+        .btn-action { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border:none; cursor: pointer; font-weight: bold; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-secondary { background: #eee; color: #555; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Mi Compra 🛒</h1>
+        <p>Agrega lo que trajiste del súper</p>
+    </header>
+
+    <div style="text-align: right; margin-bottom: 15px;">
+        <button onclick="abrirModalCrear()" style="background:none; border:none; color: var(--primary); font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px; margin-left: auto;">
+            <i class="ph-bold ph-plus-circle"></i> Crear Nuevo Ingrediente
+        </button>
+    </div>
+
+    <form onsubmit="enviarCompra(event)">
+        <div id="listaIngredientes">
+            </div>
+
+        <button type="button" onclick="agregarFila()" class="btn-action btn-secondary" style="margin-bottom: 20px;">+ Agregar otro item</button>
+
+        <div style="display: flex; gap: 10px;">
+            <a href="/" class="btn-action btn-secondary" style="text-align: center; text-decoration: none;">Cancelar</a>
+            <button type="submit" class="btn-action btn-primary">¡Guardar en Heladera!</button>
+        </div>
+    </form>
+</div>
+
+<div id="modalCrear" class="modal-overlay">
+    <div class="modal-card">
+        <h3 style="margin-top: 0;">Nuevo Ingrediente</h3>
+        <label style="display:block; margin-bottom:5px; font-weight:600;">Nombre</label>
+        <input type="text" id="newIngName" class="input-std" placeholder="Ej: Azafrán" style="margin-bottom: 15px;">
+        
+        <label style="display:block; margin-bottom:5px; font-weight:600;">Unidad de Medida</label>
+        <select id="newIngUnit" class="input-std" style="margin-bottom: 20px;">
+            <option value="unidad">Unidades (u)</option>
+            <option value="taza">Tazas </option>
+            <option value="gramos">Gramos (gr)</option>
+            <option value="ml">Mililitros (ml)</option>
+            <option value="cucharadas">Cucharadas</option>
+            <option value="cucharaditas">Cucharaditas</option>
+        </select>
+
+        <button onclick="guardarNuevoIngrediente()" class="btn-action btn-primary">Crear Ingrediente</button>
+        <button onclick="cerrarModal()" class="btn-action btn-secondary" style="margin-top: 5px;">Cancelar</button>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    // Lista mutable para poder agregarle los nuevos ingredientes al vuelo
+    let ingredientesDB = /*[[${ingredientesDisponibles}]]*/ [];
+    /*]]>*/
+</script>
+
+<script>
+    // --- LÓGICA DE FILAS Y BÚSQUEDA (Reutilizada y simplificada) ---
+    
+    function agregarFila() {
+        const div = document.createElement('div');
+        div.className = 'ing-row';
+        div.innerHTML = `
+            <div class="searchable-container">
+                <input type="text" class="input-std search-input" placeholder="Buscar..." oninput="filtrar(this)" onfocus="filtrar(this)">
+                <input type="hidden" class="ing-id-input">
+                <div class="results-list"></div>
+            </div>
+            <div style="flex: 1; display:flex; align-items:center; gap:5px;">
+                <input type="number" step="0.1" class="input-std input-qty" placeholder="Cant." required>
+                <span class="unit-badge" style="font-size:0.8rem; color:#888;">-</span>
+            </div>
+            <button type="button" onclick="this.closest('.ing-row').remove()" style="border:none; background:none; color:#E07A5F; cursor:pointer;"><i class="ph-fill ph-trash" style="font-size:1.2rem;"></i></button>
+        `;
+        document.getElementById('listaIngredientes').appendChild(div);
+    }
+
+    function filtrar(input) {
+        const val = input.value.toLowerCase();
+        const lista = input.nextElementSibling.nextElementSibling; // .results-list
+        lista.innerHTML = '';
+        
+        const matches = ingredientesDB.filter(i => i.nombre.toLowerCase().includes(val));
+        
+        if (matches.length > 0) {
+            lista.style.display = 'block';
+            matches.forEach(ing => {
+                const item = document.createElement('div');
+                item.className = 'result-item';
+                item.innerHTML = `<span>${ing.nombre}</span> <small>${ing.unidad}</small>`;
+                item.onclick = () => {
+                    input.value = ing.nombre;
+                    input.nextElementSibling.value = ing.id; // Hidden ID
+                    input.closest('.ing-row').querySelector('.unit-badge').innerText = ing.unidad;
+                    lista.style.display = 'none';
+                };
+                lista.appendChild(item);
+            });
+        } else {
+            lista.style.display = 'none';
+        }
+    }
+
+    // Cerrar listas al hacer click fuera
+    document.addEventListener('click', e => {
+        if (!e.target.closest('.searchable-container')) {
+            document.querySelectorAll('.results-list').forEach(l => l.style.display = 'none');
+        }
+    });
+
+    agregarFila(); // Una por defecto
+
+    // --- LÓGICA DE GUARDAR COMPRA ---
+    async function enviarCompra(e) {
+        e.preventDefault();
+        
+        const items = [];
+        document.querySelectorAll('.ing-row').forEach(row => {
+            const id = row.querySelector('.ing-id-input').value;
+            const cant = row.querySelector('.input-qty').value;
+            if (id && cant) {
+                items.push({ idIngrediente: parseInt(id), cantidad: parseFloat(cant) });
+            }
+        });
+
+        if (items.length === 0) {
+            alert("No has agregado ningún item válido.");
+            return;
+        }
+
+        const res = await fetch('/api/heladera/agregar', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(items)
+        });
+
+        if (res.ok) {
+            alert("¡Compra guardada! Tu heladera está llena.");
+            window.location.href = "/";
+        } else {
+            alert("Hubo un error.");
+        }
+    }
+
+    // --- LÓGICA DEL MODAL (CREAR INGREDIENTE) ---
+    function abrirModalCrear() { document.getElementById('modalCrear').style.display = 'flex'; }
+    function cerrarModal() { document.getElementById('modalCrear').style.display = 'none'; }
+
+    async function guardarNuevoIngrediente() {
+        const nombre = document.getElementById('newIngName').value;
+        const unidad = document.getElementById('newIngUnit').value;
+
+        if(!nombre) return alert("Ponle nombre al ingrediente");
+
+        try {
+            const res = await fetch('/api/ingredientes/nuevo', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ nombre, unidad })
+            });
+
+            if (res.ok) {
+                const nuevoIng = await res.json();
+                // LO AGREGAMOS A LA LISTA LOCAL PARA QUE APAREZCA EN EL BUSCADOR YA MISMO
+                ingredientesDB.push(nuevoIng);
+                
+                alert(`¡${nuevoIng.nombre} creado! Ahora búscalo en la lista.`);
+                cerrarModal();
+                
+                // Limpiar inputs
+                document.getElementById('newIngName').value = '';
+            } else {
+                alert("Error al crear. ¿Quizás ya existe?");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Error de conexión");
+        }
+    }
+</script>
+
+</body>
+</html>
