@@ -172,7 +172,6 @@ public class GestorDeCocina {
                     // Si sobra, solo actualizamos la cantidad
                     itemStock.setCantidad(nuevaCantidad);
                 }
-                itemStock.setCantidad(nuevaCantidad);
             }
         }
         heladeraRepository.save(heladera);

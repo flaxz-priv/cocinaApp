@@ -125,16 +125,20 @@
             <div th:unless="${items.empty}" class="shelf">
                 <div th:each="item : ${items}" class="food-item">
                     <button class="btn-consume" 
-                            th:onclick="'abrirModal(' + ${item.id} + ', \'' + ${item.ingrediente.nombre} + '\', \'' + ${item.ingrediente.unidad} + '\')'"
-                            title="Usé un poco de esto">
-                        <i class="ph-bold ph-minus"></i>
-                    </button>
+        th:data-id="${item.id}"
+        th:data-nombre="${item.ingrediente.nombre}"
+        th:data-unidad="${item.ingrediente.unidad}"
+        onclick="abrirModal(this.getAttribute('data-id'), this.getAttribute('data-nombre'), this.getAttribute('data-unidad'))"
+        title="Usé un poco de esto">
+    <i class="ph-bold ph-minus"></i>
+</button>
 
                     <span class="food-icon">
-                        <i class="ph-fill ph-cookie" th:if="${item.ingrediente.unidad == 'Unidades'}"></i>
-                        <i class="ph-fill ph-drop" th:if="${item.ingrediente.unidad == 'Litros' or item.ingrediente.unidad == 'Ml' or item.ingrediente.unidad == 'Mililitros'}"></i>
-                        <i class="ph-fill ph-bowl-food" th:if="${item.ingrediente.unidad == 'Gramos' or item.ingrediente.unidad == 'Kg' or item.ingrediente.unidad == 'Kilos'}"></i>
-                        <i class="ph-fill ph-package" th:if="${item.ingrediente.unidad != 'Unidades' and item.ingrediente.unidad != 'Litros' and item.ingrediente.unidad != 'Ml' and item.ingrediente.unidad != 'Mililitros' and item.ingrediente.unidad != 'Gramos' and item.ingrediente.unidad != 'Kg' and item.ingrediente.unidad != 'Kilos'}"></i>
+                        <i class="ph-fill ph-cookie" th:if="${item.ingrediente.unidad == 'unidad'}"></i>
+                        <i class="ph-fill ph-drop" th:if="${item.ingrediente.unidad == 'litros' or item.ingrediente.unidad == 'ml' or item.ingrediente.unidad == 'Mililitros'}"></i>
+                        <i class="ph-fill ph-bowl-food" th:if="${item.ingrediente.unidad == 'gramos' or item.ingrediente.unidad == 'Kg' or item.ingrediente.unidad == 'Kilos'}"></i>
+                        <i class="ph-fill ph-fork-knife" th:if="${item.ingrediente.unidad == 'cucharadas' or item.ingrediente.unidad == 'cucharadita'}"></i>
+                        <i class="ph-fill ph-coffee" th:if="${item.ingrediente.unidad == 'taza'}"></i>
                     </span>
                     
                     <span class="food-name" th:text="${item.ingrediente.nombre}">Nombre</span>
